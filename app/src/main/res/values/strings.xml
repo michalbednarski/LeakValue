@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">LeakValue</string>
+    <string name="hello">
+        This is exploit for <tt>LazyValue</tt> use-after-<tt>Parcel.recycle()</tt>
+
+        \n\nPress START button below to attempt leaking IApplicationThread handle
+        passed to attachApplication by system Settings app and use it to inject code into
+        that app. Upon successful completion you\'ll see result of <tt>id</tt> command here
+
+        \n\nMANUAL TESTING opens Activity allowing manually calling exploit primitive either
+        against system_server (like main exploit) or Service running inside this app (for debugging)
+    </string>
+</resources>

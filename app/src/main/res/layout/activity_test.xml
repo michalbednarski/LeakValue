@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".localtest.TestActivity">
+
+    <CheckBox
+        android:id="@+id/use_test_service"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Use test service (instead of system_server)" />
+
+    <Spinner
+        android:id="@+id/leaker_factory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="doStuff1"
+        android:text="Create leaker" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="doStuff2"
+        android:text="Use leaker" />
+
+</LinearLayout>
